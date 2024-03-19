@@ -263,22 +263,28 @@ class VPSTO():
         if self.opt.multithreading is False:
             costs = loss(sol.candidates)
         else:
-            costs = self.__loss_multithread(loss, sol)
+            costs, rollouts, max_ig_indices = self.__loss_multithread(loss, sol)
 
         # Update the best solution 
         # if np.min(costs) < sol.c_best:
         i_best = np.argmin(costs)
+        sol.rollouts = rollouts
+        sol.max_ig_idx_best = max_ig_indices[i_best]
+        sol.costs = costs
+        sol.i_best = i_best
         sol.c_best = costs[i_best]
         sol.T_best = sol.candidates['T'][i_best]
         sol.p_best = p[i_best]
         return sol
     
-    def __call_loss_multithreading(self, loss, candidate, costs, idx):
-        costs[idx] = loss(candidate)
+    def __call_loss_multithreading(self, loss, candidate, costs, rollouts, max_ig_indices, idx):
+        costs[idx], rollouts[idx], max_ig_indices[idx] = loss(candidate)
         
     def __loss_multithread(self, loss, sol):
         pop_size = len(sol.candidates['T'])
         costs = np.empty(pop_size)
+        rollouts = np.empty(pop_size, dtype=object)
+        max_ig_indices = np.empty(pop_size, dtype=int)
         candidates = []
         for i in range(pop_size):
             candidates.append({'pos': sol.candidates['pos'][i],
@@ -288,7 +294,9 @@ class VPSTO():
         with concurrent.futures.ThreadPoolExecutor(max_workers=pop_size) as executor:
             futures = []
             for i in range(pop_size):
-                futures.append(executor.submit(self.__call_loss_multithreading, loss, candidates[i], costs, i))
+                futures.append(executor.submit(
+                    self.__call_loss_multithreading, loss, 
+                    candidates[i], costs, rollouts, max_ig_indices, i))
             for future in concurrent.futures.as_completed(futures):
                 future.result()
-        return costs
+        return costs, rollouts, max_ig_indices
