@@ -8,7 +8,7 @@ try:
 except IOError:  # file not found
     pass
 
-setup(name="vpsto",
+setup(name="ig_vpsto",
       long_description=long_description,  # __doc__, # can be used in the vpsto.py file
       long_description_content_type = 'text/markdown',
       version='1.0.0',
@@ -19,7 +19,7 @@ setup(name="vpsto",
       maintainer_email="authors_firstname.lastname@epfl.ch",
       url="https://github.com/JuJankowski/vp-sto",
       license="BSD",
-      packages=["vpsto"],
+      packages=["ig_vpsto"],
       install_requires=["numpy", "cma"],
       extras_require={
             "plotting": ["matplotlib"],

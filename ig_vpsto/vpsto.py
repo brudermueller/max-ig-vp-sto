@@ -2,8 +2,8 @@ import numpy as np
 import cma
 import concurrent.futures
 
-from vpsto.obf import OBF
-from vpsto.vptraj import VPTraj
+from ig_vpsto.obf import OBF
+from ig_vpsto.vptraj import VPTraj
 
 # Collection of options for the VPSTO algorithm
 class VPSTOOptions:
@@ -246,7 +246,7 @@ class VPSTO():
     
     def predictive_sampling(self, loss, q, dq, qT_bias, Q, R):
         ### samples candidate trajectories and chooses the best one
-        
+        print('Using IG-VPSTO: predictive sampling')
         # Initialize the solution
         sol = VPSTOSolution(self.opt)
         dqT=np.zeros_like(dq)

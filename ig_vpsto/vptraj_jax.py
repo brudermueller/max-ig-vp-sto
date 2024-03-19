@@ -1,4 +1,4 @@
-from vpsto.obf import OBF
+from ig_vpsto.obf import OBF
 import numpy as np
 import jax.numpy as jnp
 from jax import jit, lax, random

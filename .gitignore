@@ -3,3 +3,4 @@ vpsto/__pycache__/
 examples/.ipynb_checkpoints/
 build/
 TODO.md
+*.pyc
