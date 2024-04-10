@@ -251,15 +251,35 @@ class VPSTO():
         sol = VPSTOSolution(self.opt)
         dqT=np.zeros_like(dq)
         # Sample candidate trajectories, compute their loss and return the best one
-        white_noise = np.random.normal(size=(self.opt.pop_size, self.opt.N_via*self.opt.ndof))
-        pos, vel, acc, p, T = self.vptraj.sample_trajectories(white_noise, q, dq0=dq, qT=qT_bias, 
-                                                              dqT=dqT, Q=Q, R=R)
+        white_noise = np.random.normal(size=(self.opt.pop_size, (self.opt.N_via)*self.opt.ndof))
+        # check if qT_bias is is 2 dimensional 
+        print('qT_bias shape:', qT_bias.shape)
+        if len(qT_bias.shape) > 1:
+            # then we need to iterate over the pop_size
+            p_candidates = np.zeros((self.opt.pop_size, self.opt.N_via*self.opt.ndof))
+            T_candidates = np.zeros(self.opt.pop_size)
+            q_traj = np.zeros((self.opt.pop_size, self.opt.N_eval, self.opt.ndof))
+            dq_traj = np.zeros((self.opt.pop_size, self.opt.N_eval, self.opt.ndof))
+            ddq_traj = np.zeros((self.opt.pop_size, self.opt.N_eval, self.opt.ndof))
+            for i in range(self.opt.pop_size):
+                _, _, _, p, T = self.vptraj.sample_trajectories(white_noise[i], q, dq0=dq, qT=qT_bias[i], dqT=dqT, Q=Q, R=R)
+                p_candidates[i] = p
+                T_candidates[i] = T
+                (q_traj[i], dq_traj[i], ddq_traj[i]) = self.vptraj.get_trajectory(p_candidates[i], q, dq0=dq, dqT=dqT, T=T_candidates[i])
+            sol.candidates['pos'] = q_traj
+            sol.candidates['vel'] = dq_traj
+            sol.candidates['acc'] = ddq_traj
+            sol.candidates['p_via'] = p_candidates
+            sol.candidates['T'] = T_candidates
+        else:
+            pos, vel, acc, p, T = self.vptraj.sample_trajectories(white_noise, q, dq0=dq, qT=qT_bias, 
+                                                                dqT=dqT, Q=Q, R=R)
 
-        sol.candidates['T'] = T * np.ones(self.opt.pop_size)
-        (sol.candidates['pos'],
-         sol.candidates['vel'],
-         sol.candidates['acc']) = self.vptraj.get_trajectory(p, q, dq0=dq, dqT=dqT, T=sol.candidates['T'])
-        sol.candidates['p_via'] = p
+            sol.candidates['T'] = T * np.ones(self.opt.pop_size)
+            (sol.candidates['pos'],
+            sol.candidates['vel'],
+            sol.candidates['acc']) = self.vptraj.get_trajectory(p, q, dq0=dq, dqT=dqT, T=sol.candidates['T'])
+            sol.candidates['p_via'] = p
         if self.opt.multithreading is False:
             costs = loss(sol.candidates)
         else:
@@ -274,7 +294,7 @@ class VPSTO():
         sol.i_best = i_best
         sol.c_best = costs[i_best]
         sol.T_best = sol.candidates['T'][i_best]
-        sol.p_best = p[i_best]
+        sol.p_best = sol.candidates['p_via'][i_best]
         return sol
     
     def __call_loss_multithreading(self, loss, candidate, costs, rollouts, max_ig_indices, idx):
