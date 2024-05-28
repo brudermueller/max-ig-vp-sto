@@ -290,6 +290,7 @@ class VPSTO():
         i_best = np.argmin(costs)
         sol.rollouts = rollouts
         sol.max_ig_idx_best = max_ig_indices[i_best]
+        sol.max_ig_idx = max_ig_indices
         sol.costs = costs
         sol.i_best = i_best
         sol.c_best = costs[i_best]
