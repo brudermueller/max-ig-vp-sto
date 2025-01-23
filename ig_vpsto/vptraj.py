@@ -13,7 +13,8 @@ class VPTraj:
         self.acc_lim = acc_lim # -acc_lim < ddq < acc_lim (element-wise)
         self.__setup_basis()     # setup the basis functions for fast online retrieval
 
-    def sample_trajectories(self, noise, q0, dq0=None, qT=None, dqT=None, Q=None, R=None, mu_prior=None, P_prior=None, T=None):
+    def sample_trajectories(self, noise, q0, dq0=None, qT=None, dqT=None, 
+                            Q=None, R=None, mu_prior=None, P_prior=None, T=None):
         # Sample trajectories from the posterior distribution.
         # noise: (N_traj, dim_p), N_traj: number of trajectories to sample, dim_p: dimension of the via-point parameters
         # q0: initial position
@@ -22,7 +23,7 @@ class VPTraj:
         # dqT: final velocity, will be assumed to be contained in p if not given
         # Q: precision matrix for qT, ignored if qT is None
         # R: penalization matrix for accelerations over time, assumed to be 1 if not given
-        # p_prior: prior mean for via-point parameters
+        # mu_prior: prior mean for via-point parameters
         # P_prior: prior precision for via-point parameters
         # T: duration of the trajectory, will be computed if not given
 

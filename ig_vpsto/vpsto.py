@@ -298,26 +298,38 @@ class VPSTO():
         sol.p_best = sol.candidates['p_via'][i_best]
         return sol
     
-    def __call_loss_multithreading(self, loss, candidate, costs, rollouts, max_ig_indices, idx):
-        costs[idx], rollouts[idx], max_ig_indices[idx] = loss(candidate)
+    def __call_loss_multithreading(self, loss, candidate, costs, rollouts, max_ig_indices, ctrls, idx):
+        costs[idx], rollouts[idx], max_ig_indices[idx], ctrls[idx] = loss(candidate)
         
     def __loss_multithread(self, loss, sol):
         pop_size = len(sol.candidates['T'])
         costs = np.empty(pop_size)
         rollouts = np.empty(pop_size, dtype=object)
         max_ig_indices = np.empty(pop_size, dtype=int)
+        ctrls = np.empty(pop_size, dtype=object)
         candidates = []
         for i in range(pop_size):
-            candidates.append({'pos': sol.candidates['pos'][i],
-                               'vel': sol.candidates['vel'][i],
-                               'acc': sol.candidates['acc'][i],
-                               'T': sol.candidates['T'][i]})
+            if hasattr(sol, 'candidates_joint'):
+                candidates.append({'pos': sol.candidates['pos'][i],
+                                   'vel': sol.candidates['vel'][i],
+                                   'acc': sol.candidates['acc'][i],
+                                   'T': sol.candidates['T'][i],
+                                   'p_via': sol.candidates['p_via'][i],
+                                   'pos_joint': sol.candidates_joint['pos'][i],
+                                   'vel_joint': sol.candidates_joint['vel'][i],
+                                   'acc_joint': sol.candidates_joint['acc'][i],
+                                   'T_joint': sol.candidates_joint['T'][i]})
+            else:
+                candidates.append({'pos': sol.candidates['pos'][i],
+                                'vel': sol.candidates['vel'][i],
+                                'acc': sol.candidates['acc'][i],
+                                'T': sol.candidates['T'][i]})
         with concurrent.futures.ThreadPoolExecutor(max_workers=pop_size) as executor:
             futures = []
             for i in range(pop_size):
                 futures.append(executor.submit(
                     self.__call_loss_multithreading, loss, 
-                    candidates[i], costs, rollouts, max_ig_indices, i))
+                    candidates[i], costs, rollouts, max_ig_indices, ctrls, i))
             for future in concurrent.futures.as_completed(futures):
                 future.result()
-        return costs, rollouts, max_ig_indices
+        return costs, rollouts, max_ig_indices, ctrls
